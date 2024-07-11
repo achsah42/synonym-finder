@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synonym Finder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        .results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Synonym Finder</h1>
+        <input type="text" id="wordInput" placeholder="Enter a word">
+        <button onclick="findSynonyms()">Search</button>
+        <div class="results" id="results"></div>
+    </div>
+    
+    <script>
+        async function findSynonyms() {
+            const word = document.getElementById('wordInput').value;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = 'Loading...';
+
+            const url = `https://api.datamuse.com/words?rel_syn=${word}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.length > 0) {
+                    resultsDiv.innerHTML = `<h2>Synonyms for "${word}":</h2><ul>${data.map(s => `<li>${s.word}</li>`).join('')}</ul>`;
+                } else {
+                    resultsDiv.innerHTML = `No synonyms found for "${word}".`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = 'Error fetching synonyms. Please try again later.';
+            }
+        }
+    </script>
+</body>
+</html>
