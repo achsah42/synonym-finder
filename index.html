@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Synonym Finder</title>
+    <title>Synonym Finder with Definitions</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,30 +26,54 @@
 </head>
 <body>
     <div class="container">
-        <h1>Synonym Finder</h1>
+        <h1>Synonym Finder with Definitions</h1>
         <input type="text" id="wordInput" placeholder="Enter a word">
-        <button onclick="findSynonyms()">Search</button>
+        <button onclick="findSynonymsAndDefinitions()">Search</button>
         <div class="results" id="results"></div>
     </div>
     
     <script>
-        async function findSynonyms() {
+        async function findSynonymsAndDefinitions() {
             const word = document.getElementById('wordInput').value;
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = 'Loading...';
 
-            const url = `https://api.datamuse.com/words?rel_syn=${word}`;
+            const synonymsUrl = `https://api.datamuse.com/words?rel_syn=${word}`;
+            const definitionsUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
 
             try {
-                const response = await fetch(url);
-                const data = await response.json();
-                if (data.length > 0) {
-                    resultsDiv.innerHTML = `<h2>Synonyms for "${word}":</h2><ul>${data.map(s => `<li>${s.word}</li>`).join('')}</ul>`;
+                const [synonymsResponse, definitionsResponse] = await Promise.all([
+                    fetch(synonymsUrl),
+                    fetch(definitionsUrl)
+                ]);
+
+                const synonymsData = await synonymsResponse.json();
+                const definitionsData = await definitionsResponse.json();
+
+                let definitionsHTML = '';
+                if (definitionsData.title !== "No Definitions Found") {
+                    const definitions = definitionsData[0].meanings[0].definitions;
+                    definitionsHTML = `
+                        <h2>Definition for "${word}":</h2>
+                        <ul>${definitions.map(d => `<li>${d.definition}</li>`).join('')}</ul>
+                    `;
                 } else {
-                    resultsDiv.innerHTML = `No synonyms found for "${word}".`;
+                    definitionsHTML = `No definitions found for "${word}".`;
                 }
+
+                let synonymsHTML = '';
+                if (synonymsData.length > 0) {
+                    synonymsHTML = `
+                        <h2>Synonyms for "${word}":</h2>
+                        <ul>${synonymsData.map(s => `<li>${s.word}</li>`).join('')}</ul>
+                    `;
+                } else {
+                    synonymsHTML = `No synonyms found for "${word}".`;
+                }
+
+                resultsDiv.innerHTML = `${definitionsHTML}<br>${synonymsHTML}`;
             } catch (error) {
-                resultsDiv.innerHTML = 'Error fetching synonyms. Please try again later.';
+                resultsDiv.innerHTML = 'Error fetching data. Please try again later.';
             }
         }
     </script>
